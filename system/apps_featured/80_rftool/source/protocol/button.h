@@ -152,7 +152,7 @@ private:
     int start = attributes["start"];
 
     if (length == 24) {
-      sprintf(desc, "%d bits (%d): <%06x>", length, start, (int)d0);
+      sprintf(desc, "%d bits (%d): <%06x>", length, start, (int)d0 >> 8);
     } else {
       sprintf(desc, "%d bits (%d): <%08x %08x>", length, start, (int)d0, (int)d1);
     }
