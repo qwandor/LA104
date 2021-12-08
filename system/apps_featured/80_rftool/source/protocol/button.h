@@ -3,7 +3,7 @@ class CButton : public CProtocol
 public:
   virtual int Frequency() override
   {
-    return 433850000UL;
+    return 433920000UL;
   }
 
   virtual void Example(CAttributes& attributes) override
