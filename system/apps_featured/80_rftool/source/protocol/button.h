@@ -9,8 +9,9 @@ public:
   virtual void Example(CAttributes& attributes) override
   {
     attributes["length"] = 64;
-    attributes["data_0"] = 0x12345678;
-    attributes["data_1"] = 0xabcdef01;
+    attributes["start"] = 2;
+    attributes["data_0"] = 0x12345600;
+    attributes["data_1"] = 0;
   }
 
   virtual bool Demodulate(const CArray<uint16_t>& pulse, CAttributes& attributes) override
