@@ -158,11 +158,12 @@ private:
     uint32_t d0 = attributes["data_0"];
     uint32_t d1 = attributes["data_1"];
     int start = attributes["start"];
+    int shortDuration = attributes["shortDuration"];
 
     if (length == 24) {
-      sprintf(desc, "%d bits (%d): <%06x>", length, start, (int)d0 >> 8);
+      sprintf(desc, "%d bits (%d,%duS): <%06x>", length, start, shortDuration, (int)d0 >> 8);
     } else {
-      sprintf(desc, "%d bits (%d): <%08x %08x>", length, start, (int)d0, (int)d1);
+      sprintf(desc, "%d bits (%d,%duS): <%08x %08x>", length, start, shortDuration, (int)d0, (int)d1);
     }
   }
 
