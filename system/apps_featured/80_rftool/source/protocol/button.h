@@ -10,6 +10,7 @@ public:
   {
     attributes["length"] = 64;
     attributes["start"] = 2;
+    attributes["shortDuration"] = 333;
     attributes["data_0"] = 0x12345600;
     attributes["data_1"] = 0;
   }
@@ -21,48 +22,46 @@ public:
 
     int length = 0;
     int start = 0;
-    if (!PulseToBytes(pulse, b, length, start))
+    // The duration in microseconds of a short pulse.
+    int shortDuration = 0;
+    if (!PulseToBytes(pulse, b, length, start, shortDuration))
       return false;
 
     BitstreamToAttributes(b, length, attributes);
     attributes["start"] = start;
+    attributes["shortDuration"] = shortDuration;
     return true;
   }
 
-  virtual bool Modulate(const CAttributes& attr, CArray<uint16_t>& pulse) override
+  virtual bool Modulate(const CAttributes& attributes, CArray<uint16_t>& pulse) override
   {
     uint8_t nibblesData[16];
     CArray<uint8_t> b(nibblesData, COUNT(nibblesData));
 
     int length = 0;
-    AttributesToBitstream(attr, b, length);
-    return BytesToPulse(b, length, pulse);
+    AttributesToBitstream(attributes, b, length);
+    int shortDuration = attributes["shortDuration"];
+    return BytesToPulse(b, length, shortDuration, pulse);
   }
 
   virtual int PulseDivisor() override { return 333; }
 
 private:
 
-  int PulseLen(int microseconds)
+  int PulseLen(int microseconds, int shortDuration)
   {
     // Convert pulse duration in microseconds to a multiple of the shortest pulse length, rounding
     // to the closest match.
-    return (microseconds + 333 / 2) / 333;
+    return (microseconds + shortDuration / 2) / shortDuration;
   }
 
-  int PulseDuration(int ticks)
-  {
-    return ticks * 333;
-  }
-
-  bool PulseToBytes(const CArray<uint16_t>& pulse, CArray<uint8_t>& bytes, int& length, int& start)
+  bool PulseToBytes(const CArray<uint16_t>& pulse, CArray<uint8_t>& bytes, int& length, int& start, int& shortDuration)
   {
     int i;
-    // Look for a long pulse to start.
+    // Look for a long pulse (longer than 3 ms) to start.
     for (i = 0; i < pulse.GetSize() - 4; i++)
     {
-      int t = PulseLen(pulse[i]);
-      if (t >= 10)
+      if (pulse[i] >= 3000)
       {
         i++;
         break;
@@ -71,14 +70,22 @@ private:
 
     start = i;
 
+    if (pulse.GetSize() - i < 10) {
+      // If there are not many pulses left, it can't be this protocol.
+      return false;
+    }
+
+    // Use the first two pulses to figure out the scale.
+    shortDuration = (pulse[i] + pulse[i + 1]) / 4;
+
     // Do the actual decoding.
     length = 0;
     uint8_t bits = 0;
     uint8_t bit = 1;
     for (; i < pulse.GetSize() - 1 && bytes.GetSize() < 16; i += 2)
     {
-      int p0 = PulseLen(pulse[i]);
-      int p1 = PulseLen(pulse[i + 1]);
+      int p0 = PulseLen(pulse[i], shortDuration);
+      int p1 = PulseLen(pulse[i + 1], shortDuration);
       if (p0 == 3 && p1 == 1)
       {
         // 1 bit
@@ -118,10 +125,10 @@ private:
     return true;
   }
 
-  bool BytesToPulse(const CArray<uint8_t>& bytes, int length, CArray<uint16_t>& pulse)
+  bool BytesToPulse(const CArray<uint8_t>& bytes, int length, int shortDuration, CArray<uint16_t>& pulse)
   {
-    pulse.Add(PulseDuration(1));
-    pulse.Add(PulseDuration(30));
+    pulse.Add(shortDuration * 1);
+    pulse.Add(shortDuration * 30);
 
     for (int i = 0; i < length; i++)
     {
@@ -129,12 +136,12 @@ private:
       bool bit = (bytes[i / 8] & mask) != 0;
       if (bit)
       {
-        pulse.Add(PulseDuration(3));
-        pulse.Add(PulseDuration(1));
+        pulse.Add(shortDuration * 3);
+        pulse.Add(shortDuration * 1);
       } else
       {
-        pulse.Add(PulseDuration(1));
-        pulse.Add(PulseDuration(3));
+        pulse.Add(shortDuration * 1);
+        pulse.Add(shortDuration * 3);
       }
     }
     return true;
