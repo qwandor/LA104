@@ -30,6 +30,14 @@ public:
     BitstreamToAttributes(b, length, attributes);
     attributes["start"] = start;
     attributes["shortDuration"] = shortDuration;
+    if (pulse.GetSize() >= 6) {
+      attributes["p0"] = pulse[0];
+      attributes["p1"] = pulse[1];
+      attributes["p2"] = pulse[2];
+      attributes["p3"] = pulse[3];
+      attributes["p4"] = pulse[4];
+      attributes["p5"] = pulse[5];
+    }
     return true;
   }
 
