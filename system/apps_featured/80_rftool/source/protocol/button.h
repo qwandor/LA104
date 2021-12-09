@@ -89,7 +89,6 @@ private:
     // Do the actual decoding.
     length = 0;
     uint8_t bits = 0;
-    uint8_t bit = 1;
     for (; i < pulse.GetSize() - 1 && bytes.GetSize() < 16; i += 2)
     {
       int p0 = PulseLen(pulse[i], shortDuration);
@@ -97,11 +96,12 @@ private:
       if (p0 == 3 && p1 == 1)
       {
         // 1 bit
-        bits |= bit;
+        bits = bits << 1 | 1;
       }
       else if (p0 == 1 && p1 == 3)
       {
         // 0 bit
+        bits = bits << 1;
       }
       else if (p0 >= 10 || p1 >= 10)
       {
@@ -114,13 +114,11 @@ private:
       }
 
       ++length;
-      bit <<= 1;
 
       if ((length & 7) == 0)
       {
         bytes.Add(bits);
         bits = 0;
-        bit = 1;
       }
     }
 
@@ -140,7 +138,7 @@ private:
 
     for (int i = 0; i < length; i++)
     {
-      uint8_t mask = 1 << (i & 7);
+      uint8_t mask = 1 << (7 - (i & 7));
       bool bit = (bytes[i / 8] & mask) != 0;
       if (bit)
       {
