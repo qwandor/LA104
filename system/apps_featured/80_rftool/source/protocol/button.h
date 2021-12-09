@@ -167,9 +167,9 @@ private:
     int shortDuration = attributes["shortDuration"];
 
     if (length == 24) {
-      sprintf(desc, "%d bits (%d,%duS): <%06x>", length, start, shortDuration, (int)d0 >> 8);
+      sprintf(desc, "%d bits (%d,%duS): <%06x>", length, start, shortDuration, d0 >> 8);
     } else {
-      sprintf(desc, "%d bits (%d,%duS): <%08x %08x>", length, start, shortDuration, (int)d0, (int)d1);
+      sprintf(desc, "%d bits (%d,%duS): <%08x %08x>", length, start, shortDuration, d0, d1);
     }
   }
 
